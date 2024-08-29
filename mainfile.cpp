@@ -1,5 +1,6 @@
 #include "PWD.h"
 #include "CD.h"
+#include "LS.h"
 #include <regex>
 
 
@@ -13,7 +14,7 @@ string getLoc(string currworkdir, string workingdir)
         else if(currworkdir.length()>workingdir.length() && currworkdir.substr(0,workingdir.length())==workingdir)
             return "~"+currworkdir.substr(workingdir.length());
         else
-            return currworkdir;
+            return "~"+currworkdir;
 }
 
 string display(string workingdir)
@@ -41,6 +42,12 @@ int main()
         if(command=="pwd")
         {
             getPWD();
+            continue;
+        }
+        if(command=="ls")
+        {
+            DIR *dir = opendir(&currworkingdir[0]);
+            LS(dir, 1);
             continue;
         }
         regex pattern("cd.*");
