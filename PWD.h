@@ -6,11 +6,14 @@
 
 using namespace std;
 
-string getPWD()
+void getPWD()
 {
     char buffer[100];
+    string str;
     getcwd(buffer, 100);
-    return buffer;
+    str = buffer;
+    str+="\n";
+    write(1, &str[0], str.length());
 }
 
 #endif

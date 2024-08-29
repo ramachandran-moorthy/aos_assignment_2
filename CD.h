@@ -6,9 +6,29 @@
 
 using namespace std;
 
-int CD(string path)
+void CD(string path, string &currentdir, string &workingdir, string &prevdir)
 {
-    return chdir(&path[0]);
+    int ret;
+    if(path=="~")
+        ret = chdir(&workingdir[0]);
+    else if(path=="-")
+    {
+        if(prevdir=="")
+        {
+            string str = "Invalid Input: No previous directory record exists.\n";
+            write(1, &str[0], str.length());
+            return;
+        }
+        ret = chdir(&prevdir[0]);
+    }
+    else
+        ret = chdir(&path[0]);
+    if(ret!=0)
+    {
+        perror("Invalid input");
+    }
+    else
+        prevdir = currentdir;
 }
 
 #endif

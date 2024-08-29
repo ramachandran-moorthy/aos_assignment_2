@@ -40,35 +40,13 @@ int main()
         getline(cin, command);
         if(command=="pwd")
         {
-            str = getPWD();
-            str+="\n";
-            write(1, &str[0], str.length());
+            getPWD();
             continue;
         }
         regex pattern("cd .*");
         if(regex_match(command, pattern))
         {
-            str = command.substr(3);
-            if(str=="~")
-                val = CD(workingdir);
-            else if(str=="-")
-            {
-                if(prevdir=="")
-                {
-                    str = "Invalid Input: No previous directory record exists.\n";
-                    write(1, &str[0], str.length());
-                    continue;
-                }
-                val = CD(prevdir);
-            }
-            else
-                val = CD(str);
-            if(val!=0)
-            {
-                perror("Invalid input");
-            }
-            else
-                prevdir = currworkingdir;
+            CD(command.substr(3), currworkingdir, workingdir, prevdir);
             continue;
         }
         if(command=="exit")
