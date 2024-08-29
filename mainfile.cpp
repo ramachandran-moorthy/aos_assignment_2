@@ -43,10 +43,13 @@ int main()
             getPWD();
             continue;
         }
-        regex pattern("cd .*");
+        regex pattern("cd.*");
         if(regex_match(command, pattern))
         {
-            CD(command.substr(3), currworkingdir, workingdir, prevdir);
+            if(command.size()<4)
+                CD("~", currworkingdir, workingdir, prevdir);
+            else
+                CD(command.substr(3), currworkingdir, workingdir, prevdir);
             continue;
         }
         if(command=="exit")

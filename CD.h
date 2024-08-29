@@ -9,7 +9,7 @@ using namespace std;
 void CD(string path, string &currentdir, string &workingdir, string &prevdir)
 {
     int ret;
-    if(path=="~")
+    if(path=="~" || path=="")
         ret = chdir(&workingdir[0]);
     else if(path=="-")
     {
