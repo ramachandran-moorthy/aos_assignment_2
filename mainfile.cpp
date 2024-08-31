@@ -8,26 +8,15 @@
 using namespace std;
 
 char buffer[100];
-string getLoc(string currworkdir, string workingdir)
-{
-    if(currworkdir==workingdir)
-            return "~";
-        else if(currworkdir.length()>workingdir.length() && currworkdir.substr(0,workingdir.length())==workingdir)
-            return "~"+currworkdir.substr(workingdir.length());
-        else
-            return "~"+currworkdir;
-}
 
-string display(string workingdir)
+void display(string workingdir)
 {
     getlogin_r(buffer, 100);
     cout << buffer;
     gethostname(buffer, 100);
     cout << "@" << buffer << ":";
-    getcwd(buffer, 100);
-    string currworkdir = buffer;
-    cout << getLoc(currworkdir, workingdir) << ">";
-    return currworkdir;
+    string cwd = getDisplayPath(workingdir);
+    cout << cwd << ">";
 }
 
 int main()
@@ -39,14 +28,16 @@ int main()
     int val;
     do
     {
-        currworkingdir = display(workingdir);
+        display(workingdir);
+        currworkingdir = getPWD();
         getline(cin, command);
         token = strtok(&command[0], " ");
         if(token)
         {
             if(!strcmp(token, "pwd"))
             {
-                getPWD();
+                cout << getDisplayPath(workingdir) << "\n";
+                token = strtok(NULL," ");
             }
             else if(!strcmp(token, "ls"))
             {

@@ -6,14 +6,28 @@
 
 using namespace std;
 
-void getPWD()
+//this function prints the pwd based on the home directory
+//this function return the absolute path of the current working directory
+string getPWD()
 {
+    string ret="";
     char buffer[100];
     string str;
     getcwd(buffer, 100);
     str = buffer;
-    str+="\n";
-    write(1, &str[0], str.length());
+    return str;
+}
+string getDisplayPath(string workingDir)
+{
+    string str = getPWD();
+    string ret="";
+    if(str==workingDir)
+        ret =  "~";
+    else if(str.length()>workingDir.length() && str.substr(0,workingDir.length())==workingDir)
+        ret = "~"+str.substr(workingDir.length());
+    else
+        ret = "~"+str;
+    return ret;
 }
 
 #endif
