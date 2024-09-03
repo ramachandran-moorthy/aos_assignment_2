@@ -2,6 +2,7 @@
 #include "CD.h"
 #include "LS.h"
 #include "HISTORY.h"
+#include "SEARCH.h"
 
 #include<regex>
 #include<string>
@@ -205,6 +206,34 @@ int main()
                     }
                     int x = stoi(tokens[0]);
                     getHISTORY(workingdir, x);
+                }
+            }
+            else if(!strcmp(token, "search"))
+            {
+                vector<string> tokens;
+                token = strtok(NULL," ");
+                while(token)
+                {
+                    tokens.push_back(token);
+                    token = strtok(NULL," ");
+                }
+                if(tokens.size()>1)
+                {
+                    str = "Invalid Input: Too many arguments\n";
+                    write(1,&str[0],str.length());
+                }
+                else if(tokens.size()==0)
+                {
+                    str = "Invalid Input: No file or directory provided\n";
+                    write(1,&str[0],str.length());
+                }
+                else
+                {
+                    bool ret = doSEARCH(tokens[0], currworkingdir);
+                    if(ret==true)
+                        cout << "True\n";
+                    else
+                        cout << "False\n";
                 }
             }
             else if(!strcmp(token, "exit"))
