@@ -12,7 +12,6 @@
 
 using namespace std;
 
-struct dirent *f;
 struct stat st;
 struct group *grp;
 struct passwd *pwd;
@@ -79,6 +78,7 @@ string LS_file(string filepath, int mode)
 
 string LS_dir(string dirpath, int mode)
 {
+    struct dirent *f;
     DIR *directory = opendir(&dirpath[0]);
     if(directory==NULL)
     {
