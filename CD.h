@@ -9,8 +9,15 @@ using namespace std;
 void CD(string path, string &currentdir, string &workingdir, string &prevdir)
 {
     int ret;
-    if(path=="~" || path=="")
+    if(path=="")
+    {
         ret = chdir(&workingdir[0]);
+    }
+    else if(path[0]=='~')
+    {
+        path = workingdir + path.substr(1);
+        ret = chdir(&path[0]);
+    }
     else if(path=="-")
     {
         if(prevdir=="")

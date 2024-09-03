@@ -1,9 +1,11 @@
 #include "PWD.h"
 #include "CD.h"
 #include "LS.h"
+#include "HISTORY.h"
+
 #include<regex>
-#include<cstring>
 #include<string>
+#include<sys/wait.h>
 
 using namespace std;
 
@@ -31,6 +33,9 @@ int main()
         display(workingdir);
         currworkingdir = getPWD();
         getline(cin, command);
+        if(command=="")
+            continue;
+        writeHISTORY(command, workingdir);
         token = strtok(&command[0], " ");
         if(token)
         {
@@ -74,7 +79,7 @@ int main()
                         }
                         else
                         {
-                            str = "Invalid option for ls: " + str;
+                            str = "Invalid option for ls: " + str + "\n";
                             write(1,&str[0],str.length());
                             flag = true;
                             break;
@@ -109,6 +114,8 @@ int main()
                     }
                     token = strtok(NULL," ");
                 }
+                if(flag==true)
+                    continue;
                 if(directories.size()==0 && files.size()==0)
                     ret = LS_dir(currworkingdir, mode);
                 else
@@ -159,11 +166,77 @@ int main()
                     CD(tokens[0], currworkingdir, workingdir, prevdir);
                 }
             }
+            else if(!strcmp(token, "echo"))
+            {
+                token = strtok(NULL, " \t");
+                while(token)
+                {
+                    cout << token << " ";
+                    token = strtok(NULL, " \t");
+                }
+                cout << "\n";
+            }
+            else if(!strcmp(token, "history"))
+            {
+                vector<string> tokens;
+                token = strtok(NULL," ");
+                while(token)
+                {
+                    tokens.push_back(token);
+                    token = strtok(NULL," ");
+                }
+                if(tokens.size()>1)
+                {
+                    str = "Invalid Input: Too many arguments\n";
+                    write(1,&str[0],str.length());
+                }
+                else if(tokens.size()==0)
+                {
+                    getHISTORY(workingdir);
+                }
+                else
+                {
+                    regex numpattern("[0-9]*");
+                    if(!regex_match(tokens[0], numpattern))
+                    {
+                        str = "Invalid Input: Incorrect argument\n";
+                        write(1,&str[0],str.length());
+                        continue;
+                    }
+                    int x = stoi(tokens[0]);
+                    getHISTORY(workingdir, x);
+                }
+            }
             else if(!strcmp(token, "exit"))
                 break;
             else
             {
-                //todo: write execvp call
+                vector<char*> tokens;
+                bool flag = false;
+                while(token)
+                {
+                    if(!strcmp(token, "&"))
+                        flag = true;
+                    else 
+                        tokens.push_back(token);
+                    token = strtok(NULL, " ");
+                }
+                tokens.push_back(nullptr);
+                int pid = fork();
+                if(pid==0)
+                {
+                    int val = execvp(tokens[0], tokens.data());
+                    if(val==-1)
+                        cout << "Invalid command: " << tokens[0] << "\n";
+                    exit(1);
+                }
+                else
+                {
+                    if(flag==true)
+                        cout << to_string(pid) << "\n";
+                    if(flag==false)
+                        ::wait(NULL);
+                }
             }
         }
         
