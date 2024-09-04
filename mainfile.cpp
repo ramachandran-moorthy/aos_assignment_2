@@ -3,6 +3,8 @@
 #include "LS.h"
 #include "HISTORY.h"
 #include "SEARCH.h"
+#include "PINFO.h"
+#include "SIGNALS.h"
 
 #include<regex>
 #include<string>
@@ -58,6 +60,10 @@ int main()
         DIR *directory = opendir(&currworkingdir[0]);
         struct stat st;
         struct dirent *f;
+
+        signal(SIGINT, handle_sigint);   // CTRL-C
+        signal(SIGTSTP, handle_sigtstp); // CTRL-Z
+
         read(STDIN_FILENO, &ch, 1);
         //ch = getchar();
         if(ch=='\t')
@@ -398,38 +404,85 @@ int main()
                             cout << "False\n";
                     }
                 }
+                else if(!strcmp(token, "pinfo"))
+                {
+                    vector<string> tokens;
+                    token = strtok(NULL," ");
+                    while(token)
+                    {
+                        tokens.push_back(token);
+                        token = strtok(NULL," ");
+                    }
+                    if(tokens.size()>1)
+                    {
+                        str = "Invalid Input: Too many arguments\n";
+                        write(1,&str[0],str.length());
+                    }
+                    else if(tokens.size()==0)
+                    {
+                        pid_t current_pid = getpid();
+                        printProcessInfo(current_pid);
+                    }
+                    else
+                    {
+                        regex numpattern("[0-9]*");
+                        if(!regex_match(tokens[0], numpattern))
+                        {
+                            str = "Invalid Input: Incorrect argument\n";
+                            write(1,&str[0],str.length());
+                            continue;
+                        }
+                        int x = stoi(tokens[0]);
+                        printProcessInfo(x);
+                    }
+                }
                 else if(!strcmp(token, "exit"))
                     break;
                 else
                 {
                     vector<char*> tokens;
-                    bool flag = false;
+                    bool flag1 = false;
                     while(token)
                     {
-                        if(!strcmp(token, "&"))
-                            flag = true;
-                        else 
+                        string temp = token;
+                        if(temp=="&"){
+                            flag1 = true;
+                            cout << "Background" << endl;
+                        }
+                        else
                             tokens.push_back(token);
                         token = strtok(NULL, " ");
                     }
                     tokens.push_back(nullptr);
                     int pid = fork();
-                    if(pid==0)
+                    if(pid==0)//child process
                     {
                         int val = execvp(tokens[0], tokens.data());
                         if(val==-1)
                             cout << "Invalid command: " << tokens[0] << "\n";
                         exit(1);
                     }
-                    else
+                    else //parent process
                     {
-                        if(flag==true)
+                        if(flag1==true)
+                        {
                             cout << to_string(pid) << "\n";
-                        if(flag==false)
-                            ::wait(NULL);
+                            flag1=false;
+                        }
+                        else
+                        {
+                            int status;
+                            waitpid(pid, &status, WUNTRACED);
+                        }
                     }
                 }
             }
+        }
+        else if(ch==4)
+        {
+            disableRawMode(oldt);
+            cout << "\n" << flush;
+            exit(1);
         }
         else
         {
