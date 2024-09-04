@@ -10,7 +10,7 @@
 
 using namespace std;
 
-void getHISTORY(string workdir, int n=10)
+vector<string> getHISTORY(string workdir, int n=10)
 {
     vector<string> commandQueue;
     ifstream histfile(workdir+"/history.txt");
@@ -19,15 +19,8 @@ void getHISTORY(string workdir, int n=10)
     {
         commandQueue.push_back(buffer);
     }
-    if(n>commandQueue.size())
-    {
-        n=commandQueue.size();
-    }
-    for(int i=commandQueue.size()-n;i<commandQueue.size();i++)
-    {
-        cout << commandQueue[i] << "\n";
-    }
     histfile.close();
+    return commandQueue;
 }
 
 void writeHISTORY(string command, string workdir)

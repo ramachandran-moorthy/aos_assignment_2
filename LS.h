@@ -41,7 +41,7 @@ Modes:
 4: ls -la
 */
 
-string LS_file(string filepath, int mode)
+string LS_file(string &filepath, int mode)
 {
     string ret="", t;
     int check = stat(&filepath[0], &st);
@@ -76,7 +76,7 @@ string LS_file(string filepath, int mode)
     return ret;
 }
 
-string LS_dir(string dirpath, int mode)
+string LS_dir(string &dirpath, int mode)
 {
     struct dirent *f;
     DIR *directory = opendir(&dirpath[0]);
