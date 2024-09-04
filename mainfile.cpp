@@ -40,6 +40,47 @@ void disableRawMode(struct termios oldt)
     tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
 }
 
+void executeCommand(char* command) {
+    char* args[100];
+    int i = 0;
+
+    args[i] = strtok(command, " ");
+    while (args[i] != nullptr) {
+        args[++i] = strtok(nullptr, " ");
+    }
+
+    execvp(args[0], args);
+    perror("execvp failed");
+    exit(1);
+}
+
+void executePipes(vector<string> &commands)
+{
+    int num_commands = commands.size();
+    int pipe_fds[2];
+    int in_fd = 0;
+
+    for (int i = 0; i < num_commands; ++i) {
+        pipe(pipe_fds);
+        if(fork() == 0)
+        {
+            dup2(in_fd, 0);
+            if (i < num_commands - 1)
+            {
+                dup2(pipe_fds[1], 1);
+            }
+            close(pipe_fds[0]);
+            executeCommand(&commands[i][0]);
+        }
+        else
+        {
+            wait(nullptr);
+            close(pipe_fds[1]);
+            in_fd = pipe_fds[0];
+        }
+    }
+}
+
 int main()
 {
     getcwd(buffer, 100);
@@ -201,6 +242,23 @@ int main()
             commands.push_back(command.substr(temp, command.length()-temp));
             for(int i=0;i<commands.size();i++)
             {
+                if(commands[i].find("|")!=string::npos)
+                {
+                    //Pipe exists
+                    vector<string> c;
+                    temp=0;
+                    for(int j=0;j<commands[i].length();j++)
+                    {
+                        if(commands[i][j]=='|')
+                        {
+                            c.push_back(commands[i].substr(temp,j-temp));
+                            temp=j+1;
+                        }
+                    }
+                    c.push_back(commands[i].substr(temp, commands[i].length()-temp));
+                    executePipes(c);
+                    continue;
+                }
                 currworkingdir = getPWD();
                 token = strtok(&commands[i][0], " ");
                 if(token)
@@ -463,10 +521,8 @@ int main()
                         while(token)
                         {
                             string temp = token;
-                            if(temp=="&"){
+                            if(temp=="&")
                                 flag1 = true;
-                                cout << "Background" << endl;
-                            }
                             else
                                 tokens.push_back(token);
                             token = strtok(NULL, " ");
