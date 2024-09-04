@@ -3,7 +3,6 @@
 #include "LS.h"
 #include "HISTORY.h"
 #include "SEARCH.h"
-#include "SEARCH.h"
 
 #include<regex>
 #include<string>
