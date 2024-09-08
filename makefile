@@ -1,0 +1,2 @@
+bhah:
+	g++ mainfile.cpp

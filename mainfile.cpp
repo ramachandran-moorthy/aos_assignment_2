@@ -8,7 +8,9 @@
 
 #include<regex>
 #include<string>
+#include<cstring>
 #include<sys/wait.h>
+#include <fcntl.h> 
 #include<termios.h>
 
 
@@ -81,6 +83,94 @@ void executePipes(vector<string> &commands)
     }
 }
 
+void execute_command(char* command, char* input_file = nullptr, char* output_file = nullptr, bool append = false) {
+    char* args[100];
+    int i = 0;
+
+    args[i] = strtok(command, " ");
+    while (args[i] != nullptr)
+    {
+        args[++i] = strtok(nullptr, " ");
+    }
+
+    if (input_file)
+    {
+        int input_fd = open(input_file, O_RDONLY);
+        if (input_fd < 0)
+        {
+            perror("Error opening input file");
+            exit(1);
+        }
+        dup2(input_fd, STDIN_FILENO);
+        close(input_fd);
+    }
+
+    if (output_file)
+    {
+        int output_fd;
+        if (append)
+        {
+            output_fd = open(output_file, O_WRONLY | O_CREAT | O_APPEND, 0644);
+        }
+        else
+        {
+            output_fd = open(output_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+        }
+
+        if (output_fd < 0)
+        {
+            perror("Error opening output file");
+            exit(1);
+        }
+        dup2(output_fd, STDOUT_FILENO);
+        close(output_fd);
+    }
+
+    execvp(args[0], args);
+    perror("execvp failed");
+    exit(1);
+}
+
+void executeRedirection(char* command)
+{
+    char* input_file = nullptr;
+    char* output_file = nullptr;
+    bool append = false;
+
+    char* input_redirect = strstr(command, "<");
+    if (input_redirect)
+    {
+        *input_redirect = '\0';
+        input_file = strtok(input_redirect + 1, " ");
+    }
+
+    char* output_redirect = strstr(command, ">>");
+    if (output_redirect)
+    {
+        *output_redirect = '\0';
+        append = true;
+        output_file = strtok(output_redirect + 2, " ");
+    }
+    else
+    {
+        output_redirect = strstr(command, ">");
+        if (output_redirect)
+        {
+            *output_redirect = '\0';
+            output_file = strtok(output_redirect + 1, " ");
+        }
+    }
+
+    if(fork() == 0)
+    {
+        execute_command(command, input_file, output_file, append);
+    }
+    else
+    {
+        wait(nullptr);
+    }
+}
+
 int main()
 {
     getcwd(buffer, 100);
@@ -104,11 +194,10 @@ int main()
         struct stat st;
         struct dirent *f;
 
-        signal(SIGINT, handle_sigint);   // CTRL-C
-        signal(SIGTSTP, handle_sigtstp); // CTRL-Z
+        signal(SIGINT, handle_sigint);
+        signal(SIGTSTP, handle_sigtstp);
 
         read(STDIN_FILENO, &ch, 1);
-        //ch = getchar();
         if(ch=='\t')
         {
             string part;
@@ -242,9 +331,10 @@ int main()
             commands.push_back(command.substr(temp, command.length()-temp));
             for(int i=0;i<commands.size();i++)
             {
-                if(commands[i].find("|")!=string::npos)
+                if(commands[i].find("|")!=string::npos && (commands[i].find(">")==string::npos 
+                        || commands[i].find("<")==string::npos || commands[i].find(">>")==string::npos))
                 {
-                    //Pipe exists
+                    //Only Pipe exists
                     vector<string> c;
                     temp=0;
                     for(int j=0;j<commands[i].length();j++)
@@ -257,6 +347,13 @@ int main()
                     }
                     c.push_back(commands[i].substr(temp, commands[i].length()-temp));
                     executePipes(c);
+                    continue;
+                }
+                else if((commands[i].find(">")!=string::npos || commands[i].find("<")!=string::npos 
+                        || commands[i].find(">>")!=string::npos) && commands[i].find("|")==string::npos)
+                {
+                    //Only redirection exists
+                    executeRedirection(&commands[i][0]);
                     continue;
                 }
                 currworkingdir = getPWD();
